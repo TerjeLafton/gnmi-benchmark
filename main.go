@@ -26,6 +26,7 @@ type CLI struct {
 	Host         string       `help:"Which host to benchmark" placeholder:"IP:PORT" required:""`
 	Username     string       `help:"Username for authentication" required:""`
 	Password     string       `help:"Password for authentication" required:""`
+	CertPath     string       `help:"Path to certificate file"`
 	Runs         int          `help:"Number of times to run" default:"1"`
 	ResourceType ResourceType `help:"Type of resource to benchmark" enum:"vrf,bgpvrf" default:"vrf"`
 	FetchType    FetchType    `help:"Type of fetch to perform" enum:"single,all" default:"single"`
@@ -63,12 +64,20 @@ func main() {
 func runBenchmark(cli *CLI, path, moduleName string) error {
 	ctx := context.Background()
 
-	target, err := api.NewTarget(
+	targetOptions := []api.TargetOption{
 		api.Address(cli.Host),
 		api.Username(cli.Username),
 		api.Password(cli.Password),
 		api.Insecure(true),
-	)
+	}
+
+	if cli.CertPath != "" {
+		targetOptions = append(targetOptions, api.TLSCA(cli.CertPath))
+	} else {
+		targetOptions = append(targetOptions, api.Insecure(true))
+	}
+
+	target, err := api.NewTarget(targetOptions...)
 	if err != nil {
 		return fmt.Errorf("failed to create new target: %w", err)
 	}
