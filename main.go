@@ -68,7 +68,6 @@ func runBenchmark(cli *CLI, path, moduleName string) error {
 		api.Address(cli.Host),
 		api.Username(cli.Username),
 		api.Password(cli.Password),
-		api.Insecure(true),
 	}
 
 	if cli.CertPath != "" {
