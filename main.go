@@ -11,17 +11,6 @@ import (
 	"github.com/openconfig/ygot/ygot"
 )
 
-const (
-	VRFPathSingle = "vrfs/vrf[vrf-name=%s]"
-	VRFPathAll    = "vrfs/vrf"
-
-	BGPVRFPathSingle = "router/bgp/as[as-number=49586]/vrfs/vrf[vrf-name=%s]"
-	BGPVRFPathAll    = "router/bgp/as[as-number=49586]/vrfs"
-
-	VRFModuleName    = "Cisco-IOS-XR-um-vrf-cfg"
-	BGPVRFModuleName = "Cisco-IOS-XR-um-router-bgp-cfg"
-)
-
 type CLI struct {
 	Host         string       `help:"Which host to benchmark" placeholder:"IP:PORT" required:""`
 	Username     string       `help:"Username for authentication" required:""`
@@ -30,6 +19,7 @@ type CLI struct {
 	Runs         int          `help:"Number of times to run" default:"1"`
 	ResourceType ResourceType `help:"Type of resource to benchmark" enum:"vrf,bgpvrf" default:"vrf"`
 	FetchType    FetchType    `help:"Type of fetch to perform" enum:"single,all" default:"single"`
+	QueryType    QueryType    `help:"Type of query to perform" enum:"full,specific" default:"full"`
 	ResourceName string       `help:"Name of resource to benchmark" placeholder:"NAME"`
 }
 
@@ -49,11 +39,21 @@ func main() {
 
 	moduleName := config.ModuleName
 	var path string
-	switch cli.FetchType {
-	case Single:
-		path = fmt.Sprintf(config.SinglePath, cli.ResourceName)
-	case All:
-		path = config.AllPath
+
+	if cli.QueryType == Full {
+		switch cli.FetchType {
+		case Single:
+			path = fmt.Sprintf(config.SinglePath, cli.ResourceName)
+		case All:
+			path = config.AllPath
+		}
+	} else {
+		switch cli.FetchType {
+		case Single:
+			path = fmt.Sprintf(config.SinglePathSpecific, cli.ResourceName)
+		case All:
+			path = config.AllPathSpecific
+		}
 	}
 
 	if err := runBenchmark(&cli, path, moduleName); err != nil {
